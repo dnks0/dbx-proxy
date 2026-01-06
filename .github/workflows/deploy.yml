@@ -11,7 +11,7 @@ env:
   # Default namespace matches the Terraform expectations in docker/README.md.
   # Change this if you publish under a different org/user.
   IMAGE_NAMESPACE: dnks0/dbx-proxy
-  IMAGE_NAME: dbx-proxy
+  PROXY_IMAGE_NAME: proxy
 
 jobs:
   docker-deploy:
@@ -37,7 +37,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Retrieve git tag
         shell: bash
@@ -60,6 +60,6 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.PROXY_IMAGE_NAME }}:${{ env.VERSION }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.PROXY_IMAGE_NAME }}:${{ env.SHORT_SHA }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.PROXY_IMAGE_NAME }}:latest
