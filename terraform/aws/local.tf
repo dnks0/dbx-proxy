@@ -1,18 +1,19 @@
 locals {
-  prefix    = var.prefix == null ? "dbx-proxy-${random_string.this.result}" : "${var.prefix}-dbx-proxy-${random_string.this.result}"
+  prefix = var.prefix == null ? "dbx-proxy-${random_string.this.result}" : "${var.prefix}-dbx-proxy-${random_string.this.result}"
 
-  tags      = merge(
+  tags = merge(
     {
-      "Component"   = local.prefix
-      "ManagedBy"   = "terraform"
+      "Component" = local.prefix
+      "ManagedBy" = "terraform"
     },
     var.tags,
   )
 
-  vpc_id     = var.vpc_id != null ? var.vpc_id : aws_vpc.this[0].id
-  subnet_ids = length(var.subnet_ids) > 0 ? var.subnet_ids : [for s in aws_subnet.this : s.id]
+  vpc_id             = var.vpc_id != null ? var.vpc_id : aws_vpc.this[0].id
+  subnet_ids         = length(var.subnet_ids) > 0 ? var.subnet_ids : [for s in aws_subnet.this : s.id]
+  subnet_cidr_blocks = length(var.subnet_ids) > 0 ? [for s in values(data.aws_subnet.this) : s.cidr_block] : [for s in aws_subnet.this : s.cidr_block]
 
-  allowed_principals  = [
+  allowed_principals = [
     "arn:aws:iam::565502421330:role/private-connectivity-role-${var.region}"
   ]
 
@@ -22,13 +23,36 @@ locals {
         path        = "/dbx-proxy/conf/listener.yaml"
         owner       = "root:root"
         permissions = "0644"
-        content     = module.common.dbx_proxy_listener_yaml
+        content     = module.common.dbx_proxy_listener
       },
       {
         path        = "/dbx-proxy/docker-compose.yaml"
         owner       = "root:root"
         permissions = "0644"
-        content     = module.common.docker_compose_yaml
+        content     = module.common.docker_compose
+      },
+      {
+        path        = "/etc/systemd/system/dbx-proxy.service"
+        owner       = "root:root"
+        permissions = "0644"
+        content     = <<-EOT
+        [Unit]
+        Description=dbx-proxy (docker compose)
+        Requires=docker.service
+        After=docker.service network-online.target
+        Wants=network-online.target
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        WorkingDirectory=/dbx-proxy
+        ExecStart=/usr/bin/docker compose --file /dbx-proxy/docker-compose.yaml up --detach
+        ExecStop=/usr/bin/docker compose --file /dbx-proxy/docker-compose.yaml down
+        TimeoutStartSec=0
+
+        [Install]
+        WantedBy=multi-user.target
+        EOT
       },
     ]
     runcmd = [
@@ -55,7 +79,7 @@ locals {
       [
         "bash",
         "-c",
-        "set -euxo pipefail; sudo docker compose --file /dbx-proxy/docker-compose.yaml up --detach",
+        "set -euxo pipefail; sudo systemctl daemon-reload; sudo systemctl enable --now dbx-proxy.service",
       ],
     ]
   }

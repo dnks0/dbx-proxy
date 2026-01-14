@@ -12,7 +12,7 @@ resource "aws_security_group" "this" {
       from_port   = ingress.value.port
       to_port     = ingress.value.port
       protocol    = "tcp"
-      cidr_blocks = [for s in data.aws_subnet.this : s.cidr_block]
+      cidr_blocks = local.subnet_cidr_blocks
     }
   }
 
@@ -22,7 +22,7 @@ resource "aws_security_group" "this" {
     from_port   = var.dbx_proxy_health_port
     to_port     = var.dbx_proxy_health_port
     protocol    = "tcp"
-    cidr_blocks = [for s in data.aws_subnet.this : s.cidr_block]
+    cidr_blocks = local.subnet_cidr_blocks
   }
 
   # Allow all egress; alternatively add an egress rule for each target of each listener
@@ -58,10 +58,29 @@ resource "aws_iam_instance_profile" "this" {
 # Launch template for dbx-proxy instances
 resource "aws_launch_template" "this" {
   name_prefix   = "${local.prefix}-lt"
-  image_id      = "ami-015f3aa67b494b27e"
+  image_id      = data.aws_ssm_parameter.al2023_ami_id.value
   instance_type = var.instance_type
 
   vpc_security_group_ids = [aws_security_group.this.id]
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+    instance_metadata_tags      = "enabled"
+  }
+
+  monitoring {
+    enabled = true
+  }
+
+  block_device_mappings {
+    device_name = "/dev/xvda"
+
+    ebs {
+      encrypted = true
+    }
+  }
 
   iam_instance_profile {
     name = aws_iam_instance_profile.this.name
@@ -105,7 +124,7 @@ resource "aws_autoscaling_group" "this" {
 
   launch_template {
     id      = aws_launch_template.this.id
-    version = "$Latest"
+    version = tostring(aws_launch_template.this.latest_version)
   }
 
   dynamic "tag" {
@@ -123,11 +142,22 @@ resource "aws_autoscaling_group" "this" {
 
   instance_refresh {
     strategy = "Rolling"
+    triggers = ["launch_template"]
 
     preferences {
-      min_healthy_percentage = 50
+      # With desired=max=1, allowing downtime lets the ASG replace the single instance
+      # using the latest launch template version.
+      min_healthy_percentage = 0
     }
   }
+}
+
+# Attach ASG instances to the (optional) health target group
+resource "aws_autoscaling_attachment" "health" {
+  count = length(aws_lb_target_group.health)
+
+  autoscaling_group_name = aws_autoscaling_group.this.name
+  lb_target_group_arn    = aws_lb_target_group.health[0].arn
 }
 
 # Attach ASG instances to the NLB target groups
@@ -138,8 +168,3 @@ resource "aws_autoscaling_attachment" "this" {
   lb_target_group_arn    = each.value.arn
 }
 
-# Attach ASG instances to the dbx-proxy-agent target group
-resource "aws_autoscaling_attachment" "agent" {
-  autoscaling_group_name = aws_autoscaling_group.this.name
-  lb_target_group_arn    = aws_lb_target_group.agent.arn
-}

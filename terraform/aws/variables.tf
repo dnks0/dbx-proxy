@@ -16,25 +16,25 @@ variable "tags" {
 }
 
 variable "vpc_id" {
-  description = "ID of the VPC in which to deploy the dbx-proxy instances. If null, a new VPC will be created."
+  description = "ID of the VPC in which to deploy the dbx-proxy instances. If null, a new VPC will be bootstrapped."
   type        = string
   default     = null
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block for the VPC when creating one automatically."
+  description = "CIDR block for the VPC when bootstrapping a VPC."
   type        = string
   default     = "10.0.0.0/16"
 }
 
 variable "subnet_ids" {
-  description = "List of subnet IDs for the dbx-proxy instances and NLB (spread across AZs for HA). If empty, new subnets will be created."
+  description = "List of subnet IDs for the dbx-proxy instance and NLB. If empty, new subnets will be created."
   type        = list(string)
   default     = []
 }
 
 variable "subnet_cidrs" {
-  description = "CIDR blocks for subnets when creating them automatically."
+  description = "CIDR blocks for subnets when bootstrapping a VPC."
   type        = list(string)
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
@@ -57,6 +57,12 @@ variable "instance_type" {
   default     = "t3.medium"
 }
 
+variable "dbx_proxy_image_version" {
+  description = "Docker image version for dbx-proxy."
+  type        = string
+  default     = "0.1.0"
+}
+
 variable "dbx_proxy_health_port" {
   description = "Port on which the dbx-proxy instances expose a TCP health check (e.g. HAProxy or agent health endpoint)."
   type        = number
@@ -72,12 +78,12 @@ used by the dbxp CLI. Each listener defines a frontend port and a set of
 routes with destinations.
 EOT
   type = list(object({
-    name   = string
-    mode   = string         # "tcp" or "http"
-    port   = number
+    name = string
+    mode = string # "tcp" or "http"
+    port = number
     routes = list(object({
-      name         = string
-      domains      = list(string)
+      name    = string
+      domains = list(string)
       destinations = list(object({
         name = string
         host = string

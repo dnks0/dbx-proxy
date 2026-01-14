@@ -1,6 +1,6 @@
 services:
   dbx-proxy:
-    image: "ghcr.io/dnks0/dbx-proxy/dbx-proxy:0.1.0"
+    image: "ghcr.io/dnks0/dbx-proxy/dbx-proxy:${dbx_proxy_image_version}"
     container_name: "dbx-proxy"
     environment:
       - DBX_PROXY_HEALTH_PORT=${dbx_proxy_health_port}
@@ -8,6 +8,7 @@ services:
       - /dbx-proxy/conf:/dbx-proxy/conf:rw
       - dbx-proxy-run:/dbx-proxy/run
     network_mode: "host"
+    restart: unless-stopped
 
 volumes:
     dbx-proxy-run: {}

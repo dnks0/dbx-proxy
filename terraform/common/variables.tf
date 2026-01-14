@@ -1,7 +1,11 @@
+variable "dbx_proxy_image_version" {
+  description = "Docker image version for dbx-proxy."
+  type        = string
+}
+
 variable "dbx_proxy_health_port" {
   description = "Port on which the dbx-proxy instances expose a TCP health check (e.g. HAProxy or agent health endpoint)."
   type        = number
-  default     = 8080
 }
 
 variable "dbx_proxy_listener" {
@@ -11,12 +15,12 @@ Logical dbx-proxy listener configuration.
 Each listener defines a frontend port and a set of routes with destinations.
 EOT
   type = list(object({
-    name   = string
-    mode   = string         # "tcp" or "http"
-    port   = number
+    name = string
+    mode = string # "tcp" or "http"
+    port = number
     routes = list(object({
-      name         = string
-      domains      = list(string)
+      name    = string
+      domains = list(string)
       destinations = list(object({
         name = string
         host = string

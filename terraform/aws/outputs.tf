@@ -14,8 +14,8 @@ output "nlb_zone_id" {
 }
 
 output "target_group_arns" {
-  description = "ARNs of the NLB target groups, keyed by listener port."
-  value       = { for port, tg in aws_lb_target_group.this : port => tg.arn }
+  description = "ARNs of the NLB target groups, keyed by listener name."
+  value       = { for name, tg in aws_lb_target_group.this : name => tg.arn }
 }
 
 output "autoscaling_group_name" {
