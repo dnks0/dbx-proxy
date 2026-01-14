@@ -216,6 +216,7 @@ This module is intentionally minimal right now. The following limitations are im
   - The ASG uses `instance_refresh` with `min_healthy_percentage = 0` to ensure launch template updates roll out even with a single instance.
   - This implies **downtime during replacement** on apply (terminate -> relaunch).
   - **Mitigation**: run at least 2 instances and set `min_healthy_percentage` accordingly (requires module changes today).
+  - On changes to `dbx_proxy_listener`, `terraform apply` updates the EC2 launch template `user_data`, and the ASG replaces the instance (short downtime) so the new config is applied via cloud-init.
 
 - **Outbound internet dependency (when bootstrapping)**
   - If you let the module create networking and keep `enable_nat_gateway = true`, instances use NAT for outbound access.
