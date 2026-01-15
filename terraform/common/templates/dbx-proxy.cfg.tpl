@@ -2,7 +2,7 @@ global
     log stdout format raw local0 info
     stats socket /dbx-proxy/run/admin.sock user haproxy group dbx-proxy mode 660 level admin expose-fd listeners
     stats timeout 30s
-    maxconn 8192
+    maxconn ${dbx_proxy_max_connections}
 
 defaults
     log     global

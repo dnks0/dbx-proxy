@@ -116,9 +116,9 @@ resource "aws_launch_template" "this" {
 resource "aws_autoscaling_group" "this" {
   name                      = "${local.prefix}-asg"
   vpc_zone_identifier       = local.subnet_ids
-  min_size                  = 1
-  desired_capacity          = 1
-  max_size                  = 1
+  min_size                  = var.min_capacity
+  desired_capacity          = var.max_capacity
+  max_size                  = var.max_capacity
   health_check_type         = "EC2"
   health_check_grace_period = 60
 
@@ -147,7 +147,7 @@ resource "aws_autoscaling_group" "this" {
     preferences {
       # With desired=max=1, allowing downtime lets the ASG replace the single instance
       # using the latest launch template version.
-      min_healthy_percentage = 0
+      min_healthy_percentage = var.max_capacity == 1 ? 0 : 50
     }
   }
 }

@@ -73,6 +73,7 @@ These variables define what the proxy should do (listeners, health port, image t
 | Variable | Type | Default | Description |
 |---|---:|---:|---|
 | `dbx_proxy_image_version` | `string` | `"0.1.0"` | Docker image tag/version of `dbx-proxy` to deploy. |
+| `dbx_proxy_max_connections` | `number` | `null` | Optional HAProxy `maxconn` override. If unset, the AWS module derives a value from vCPU and memory of the selected instance-type. |
 | `dbx_proxy_health_port` | `number` | `8080` | Health port exposed by `dbx-proxy` (HTTP `GET /status`). Also used for NLB target group health checks. |
 | `dbx_proxy_listener` | `list(object)` | `[]` | Listener configuration (ports/modes/routes/destinations). See **Listener configuration** below. |
 
@@ -83,7 +84,9 @@ These variables define what the proxy should do (listeners, health port, image t
 | `region` | `string` | (required) | AWS region to deploy to. |
 | `prefix` | `string` | `null` | Optional naming prefix. A randomized suffix is always appended to avoid collisions. |
 | `tags` | `map(string)` | `{}` | Extra tags applied to AWS resources (also used as provider default tags). |
-| `instance_type` | `string` | `"t3.medium"` | EC2 instance type for proxy nodes. |
+| `instance_type` | `string` | `"t3.medium"` | EC2 instance type for proxy instances. |
+| `min_capacity` | `number` | `1` | Minimum number of dbx-proxy instances. |
+| `max_capacity` | `number` | `1` | Maximum number of dbx-proxy instances. |
 | `vpc_id` | `string` | `null` | Existing VPC ID. If `null`, the module bootstraps a VPC. |
 | `subnet_ids` | `list(string)` | `[]` | Existing private subnet IDs for the NLB + ASG. If empty, subnets are created. |
 | `vpc_cidr` | `string` | `"10.0.0.0/16"` | VPC CIDR (only used when creating a VPC). |

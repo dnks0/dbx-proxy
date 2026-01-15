@@ -3,6 +3,11 @@ variable "dbx_proxy_image_version" {
   type        = string
 }
 
+variable "dbx_proxy_max_connections" {
+  description = "HAProxy maxconn (optional override)."
+  type        = number
+}
+
 variable "dbx_proxy_health_port" {
   description = "Port on which the dbx-proxy instances expose a TCP health check (e.g. HAProxy or agent health endpoint)."
   type        = number

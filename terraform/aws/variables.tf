@@ -52,9 +52,27 @@ variable "enable_nat_gateway" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type for dbx-proxy nodes."
+  description = "EC2 instance type for dbx-proxy instances."
   type        = string
   default     = "t3.medium"
+}
+
+variable "dbx_proxy_max_connections" {
+  description = "Override dbx-proxy maxconn (default derived from instance_type)."
+  type        = number
+  default     = null
+}
+
+variable "min_capacity" {
+  description = "Minimum number of dbx-proxy instances."
+  type        = number
+  default     = 1
+}
+
+variable "max_capacity" {
+  description = "Maximum number of dbx-proxy instances."
+  type        = number
+  default     = 1
 }
 
 variable "dbx_proxy_image_version" {

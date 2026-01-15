@@ -2,6 +2,10 @@ data "aws_availability_zones" "this" {
   state = "available"
 }
 
+data "aws_ec2_instance_type" "this" {
+  instance_type = var.instance_type
+}
+
 data "aws_ssm_parameter" "al2023_ami_id" {
   name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64"
 }

@@ -5,6 +5,7 @@ resource "aws_lb" "this" {
   internal           = true
   subnets            = local.subnet_ids
 
+  enable_cross_zone_load_balancing = true
   enable_deletion_protection = false
 
   tags = local.tags
