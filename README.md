@@ -58,6 +58,8 @@ More details about the Terraform module and configurations can be found [here](t
 
 You will still need to configure the Databricks-side objects like NCC, private endpoint rules and accept the connection on your endpoint-service.
 
+By default the module runs in `deployment_mode = "bootstrap"` and can create networking and the NLB/endpoint service. If you already have networking use `deployment_mode = "bootstrap"` and provide `vpc_id`, and `subnet_ids`. If you already have networking/NLB, set `deployment_mode = "proxy-only"` and provide `vpc_id`, `subnet_ids`, and `nlb_arn` (see Terraform docs for details).
+
 ### Troubleshooting
 
 To validate that the proxy is up and reachable,run the following from a serverless notebook:

@@ -1,6 +1,6 @@
 dbx_proxy_image_version = "test"
 dbx_proxy_health_port   = 8080
-
+dbx_proxy_max_connections = 8192
 dbx_proxy_listener = [
   {
     name  = "database-5432"

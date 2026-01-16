@@ -2,6 +2,8 @@ prefix="dnks"
 region="eu-central-1"
 tags={}
 
+deployment_mode="bootstrap"
+
 # AWS resources
 instance_type="t3.medium"
 

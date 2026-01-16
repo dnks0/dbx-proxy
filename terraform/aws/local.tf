@@ -9,85 +9,13 @@ locals {
     var.tags,
   )
 
-  vpc_id             = var.vpc_id != null ? var.vpc_id : aws_vpc.this[0].id
-  subnet_ids         = length(var.subnet_ids) > 0 ? var.subnet_ids : [for s in aws_subnet.this : s.id]
-  subnet_cidr_blocks = length(var.subnet_ids) > 0 ? [for s in values(data.aws_subnet.this) : s.cidr_block] : [for s in aws_subnet.this : s.cidr_block]
+  bootstrap_networking    = var.deployment_mode == "bootstrap" && (var.vpc_id == null && length(var.subnet_ids) == 0)
+  bootstrap_load_balancer = var.deployment_mode == "bootstrap"
 
-  allowed_principals = [
-    "arn:aws:iam::565502421330:role/private-connectivity-role-${var.region}"
-  ]
+  vpc_id        = module.networking.vpc_id
+  subnet_ids    = module.networking.subnet_ids
+  subnet_cidrs  = module.networking.subnet_cidrs
 
-  dbx_proxy_max_connections_by_cpu = data.aws_ec2_instance_type.this.default_vcpus * 4000  # assumes rather conservative 4000 connections per vCPU
-  dbx_proxy_max_connections_by_mem = floor(data.aws_ec2_instance_type.this.memory_size * 50)  # assumes 1MiB / 50 ~= 20 KB per connection
-  dbx_proxy_max_connections = var.dbx_proxy_max_connections != null ? var.dbx_proxy_max_connections : max(
-    2000,
-    min(local.dbx_proxy_max_connections_by_cpu, local.dbx_proxy_max_connections_by_mem),
-  )  # floor at 2000 to avoid tiny defaults at small instances
+  nlb_target_group_arns = module.load_balancer.nlb_target_group_arns
 
-  cloud_config = {
-    write_files = [
-      {
-        path        = "/dbx-proxy/conf/dbx-proxy.cfg"
-        owner       = "root:root"
-        permissions = "0644"
-        content     = module.common.dbx_proxy_cfg
-      },
-      {
-        path        = "/dbx-proxy/docker-compose.yaml"
-        owner       = "root:root"
-        permissions = "0644"
-        content     = module.common.docker_compose
-      },
-      {
-        path        = "/etc/systemd/system/dbx-proxy.service"
-        owner       = "root:root"
-        permissions = "0644"
-        content     = <<-EOT
-        [Unit]
-        Description=dbx-proxy (docker compose)
-        Requires=docker.service
-        After=docker.service network-online.target
-        Wants=network-online.target
-
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        WorkingDirectory=/dbx-proxy
-        ExecStart=/usr/bin/docker compose --file /dbx-proxy/docker-compose.yaml up --detach
-        ExecStop=/usr/bin/docker compose --file /dbx-proxy/docker-compose.yaml down
-        TimeoutStartSec=0
-
-        [Install]
-        WantedBy=multi-user.target
-        EOT
-      },
-    ]
-    runcmd = [
-      [
-        "bash",
-        "-c",
-        "set -euxo pipefail; sudo dnf update -y || sudo yum update -y || sudo apt-get update -y",
-      ],
-      [
-        "bash",
-        "-c",
-        "set -euxo pipefail; (sudo dnf install -y docker || sudo yum install -y docker || sudo apt-get install -y docker.io)",
-      ],
-      [
-        "bash",
-        "-c",
-        "set -euxo pipefail; sudo systemctl enable docker; sudo systemctl start docker",
-      ],
-      [
-        "bash",
-        "-c",
-        "set -euxo pipefail; sudo mkdir -p /usr/libexec/docker/cli-plugins; sudo curl -sSL \"https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m)\" -o /usr/libexec/docker/cli-plugins/docker-compose; sudo chmod +x /usr/libexec/docker/cli-plugins/docker-compose; sudo systemctl restart docker",
-      ],
-      [
-        "bash",
-        "-c",
-        "set -euxo pipefail; sudo systemctl daemon-reload; sudo systemctl enable --now dbx-proxy.service",
-      ],
-    ]
-  }
 }

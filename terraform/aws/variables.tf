@@ -15,10 +15,39 @@ variable "tags" {
   default     = {}
 }
 
+variable "deployment_mode" {
+  description = "Deployment mode: bootstrap or proxy-only."
+  type        = string
+  default     = "bootstrap"
+  validation {
+    condition     = contains(["bootstrap", "proxy-only"], var.deployment_mode)
+    error_message = "deployment_mode must be one of: 'bootstrap', 'proxy-only'."
+  }
+  validation {
+    condition     = var.deployment_mode != "bootstrap" || (
+      (var.vpc_id != null && length(var.subnet_ids) > 0) ||
+      (var.vpc_id == null && length(var.subnet_cidrs) > 0)
+    )
+    error_message = "bootstrap mode requires either vpc_id and subnet_ids (to use existing networking) or vpc_cidr and subnet_cidrs (to bootstrap networking)."
+  }
+  validation {
+    condition     = var.deployment_mode != "proxy-only" || (var.vpc_id != null && length(var.subnet_ids) > 0)
+    error_message = "proxy-only mode requires vpc_id and subnet_ids (to use existing networking)."
+  }
+  validation {
+    condition     = var.deployment_mode != "proxy-only" || var.nlb_arn != null
+    error_message = "proxy-only mode requires nlb_arn (to attach listeners/target groups to an existing NLB)."
+  }
+}
+
 variable "vpc_id" {
   description = "ID of the VPC in which to deploy the dbx-proxy instances. If null, a new VPC will be bootstrapped."
   type        = string
   default     = null
+  validation {
+    condition     = var.vpc_id != null || length(var.subnet_ids) == 0
+    error_message = "When vpc_id is set, subnet_ids must also be provided."
+  }
 }
 
 variable "vpc_cidr" {
@@ -39,7 +68,7 @@ variable "subnet_cidrs" {
   default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
-variable "public_subnet_cidr" {
+variable "nat_subnet_cidr" {
   description = "CIDR block for the public subnet used by the NAT gateway when creating a VPC."
   type        = string
   default     = "10.0.0.0/24"
@@ -51,16 +80,16 @@ variable "enable_nat_gateway" {
   default     = true
 }
 
+variable "nlb_arn" {
+  description = "Existing Network Load Balancer ARN to attach listeners/target groups to in proxy-only mode."
+  type        = string
+  default     = null
+}
+
 variable "instance_type" {
   description = "EC2 instance type for dbx-proxy instances."
   type        = string
   default     = "t3.medium"
-}
-
-variable "dbx_proxy_max_connections" {
-  description = "Override dbx-proxy maxconn (default derived from instance_type)."
-  type        = number
-  default     = null
 }
 
 variable "min_capacity" {
@@ -85,6 +114,12 @@ variable "dbx_proxy_health_port" {
   description = "Port on which the dbx-proxy instances expose a TCP health check (e.g. HAProxy or agent health endpoint)."
   type        = number
   default     = 8080
+}
+
+variable "dbx_proxy_max_connections" {
+  description = "Override dbx-proxy maxconn (default derived from instance_type)."
+  type        = number
+  default     = null
 }
 
 variable "dbx_proxy_listener" {

@@ -1,8 +1,8 @@
-# Security group for dbx-proxy instances
+
 resource "aws_security_group" "this" {
-  name        = "${local.prefix}-sg"
+  name        = "${var.prefix}-sg"
   description = "Security group for dbx-proxy instances"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
 
   # Inbound from NLB on any listener port
   dynamic "ingress" {
@@ -12,7 +12,7 @@ resource "aws_security_group" "this" {
       from_port   = ingress.value.port
       to_port     = ingress.value.port
       protocol    = "tcp"
-      cidr_blocks = local.subnet_cidr_blocks
+      cidr_blocks = var.subnet_cidrs
     }
   }
 
@@ -22,7 +22,7 @@ resource "aws_security_group" "this" {
     from_port   = var.dbx_proxy_health_port
     to_port     = var.dbx_proxy_health_port
     protocol    = "tcp"
-    cidr_blocks = local.subnet_cidr_blocks
+    cidr_blocks = var.subnet_cidrs
   }
 
   # Allow all egress; alternatively add an egress rule for each target of each listener
@@ -35,29 +35,29 @@ resource "aws_security_group" "this" {
   }
 
   tags = merge(
-    local.tags,
+    var.tags,
     {
-      Name = "${local.prefix}-sg"
+      Name = "${var.prefix}-sg"
     },
   )
 }
 
 # IAM role for EC2 instances (simplified, extend as needed)
 resource "aws_iam_role" "this" {
-  name               = "${local.prefix}-ir"
+  name               = "${var.prefix}-ir"
   assume_role_policy = data.aws_iam_policy_document.this.json
 
-  tags = local.tags
+  tags = var.tags
 }
 
 resource "aws_iam_instance_profile" "this" {
-  name = "${local.prefix}-ip"
+  name = "${var.prefix}-ip"
   role = aws_iam_role.this.name
 }
 
 # Launch template for dbx-proxy instances
 resource "aws_launch_template" "this" {
-  name_prefix   = "${local.prefix}-lt"
+  name_prefix   = "${var.prefix}-lt"
   image_id      = data.aws_ssm_parameter.al2023_ami_id.value
   instance_type = var.instance_type
 
@@ -92,9 +92,9 @@ resource "aws_launch_template" "this" {
   tag_specifications {
     resource_type = "instance"
     tags = merge(
-      local.tags,
+      var.tags,
       {
-        Name = "${local.prefix}-ec2"
+        Name = "${var.prefix}-ec2"
       },
     )
   }
@@ -102,20 +102,20 @@ resource "aws_launch_template" "this" {
   tag_specifications {
     resource_type = "volume"
     tags = merge(
-      local.tags,
+      var.tags,
       {
-        Name = "${local.prefix}-vol"
+        Name = "${var.prefix}-vol"
       },
     )
   }
 
-  tags = local.tags
+  tags = var.tags
 }
 
 # Auto Scaling Group for dbx-proxy instances
 resource "aws_autoscaling_group" "this" {
-  name                      = "${local.prefix}-asg"
-  vpc_zone_identifier       = local.subnet_ids
+  name                      = "${var.prefix}-asg"
+  vpc_zone_identifier       = var.subnet_ids
   min_size                  = var.min_capacity
   desired_capacity          = var.max_capacity
   max_size                  = var.max_capacity
@@ -128,7 +128,7 @@ resource "aws_autoscaling_group" "this" {
   }
 
   dynamic "tag" {
-    for_each = local.tags
+    for_each = var.tags
     content {
       key                 = tag.key
       value               = tag.value
@@ -152,19 +152,10 @@ resource "aws_autoscaling_group" "this" {
   }
 }
 
-# Attach ASG instances to the (optional) health target group
-resource "aws_autoscaling_attachment" "health" {
-  count = length(aws_lb_target_group.health)
-
-  autoscaling_group_name = aws_autoscaling_group.this.name
-  lb_target_group_arn    = aws_lb_target_group.health[0].arn
-}
-
 # Attach ASG instances to the NLB target groups
 resource "aws_autoscaling_attachment" "this" {
-  for_each = aws_lb_target_group.this
+  for_each = var.nlb_target_group_arns
 
   autoscaling_group_name = aws_autoscaling_group.this.name
-  lb_target_group_arn    = each.value.arn
+  lb_target_group_arn    = each.value
 }
-
