@@ -8,6 +8,11 @@ variable "dbx_proxy_health_port" {
   type        = number
 }
 
+variable "dbx_proxy_max_connections" {
+  description = "HAProxy maxconn (optional override)."
+  type        = number
+}
+
 variable "dbx_proxy_listener" {
   description = <<EOT
 Logical dbx-proxy listener configuration.

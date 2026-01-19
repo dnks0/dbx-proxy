@@ -1,13 +1,16 @@
 # Network Load Balancer for Databricks Serverless → dbx-proxy
 resource "aws_lb" "this" {
-  name               = "${local.prefix}-nlb"
+  count = var.bootstrap_load_balancer ? 1 : 0
+
+  name               = "${var.prefix}-nlb"
   load_balancer_type = "network"
   internal           = true
-  subnets            = local.subnet_ids
+  subnets            = var.subnet_ids
 
+  enable_cross_zone_load_balancing = true
   enable_deletion_protection = false
 
-  tags = local.tags
+  tags = var.tags
 }
 
 # Optional: expose the dbx-proxy health port via the NLB so callers can reach it directly
@@ -16,11 +19,11 @@ resource "aws_lb" "this" {
 resource "aws_lb_target_group" "health" {
   count = contains([for l in var.dbx_proxy_listener : l.port], var.dbx_proxy_health_port) ? 0 : 1
 
-  name        = "tg-health"
+  name        = "dbx-proxy-tg-health"
   port        = var.dbx_proxy_health_port
   protocol    = "TCP"
   target_type = "instance"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
 
   health_check {
     protocol            = "HTTP"
@@ -31,13 +34,13 @@ resource "aws_lb_target_group" "health" {
     interval            = 10
   }
 
-  tags = local.tags
+  tags = var.tags
 }
 
 resource "aws_lb_listener" "health" {
   count = length(aws_lb_target_group.health)
 
-  load_balancer_arn = aws_lb.this.arn
+  load_balancer_arn = local.nlb_arn
   port              = var.dbx_proxy_health_port
   protocol          = "TCP"
 
@@ -51,11 +54,11 @@ resource "aws_lb_listener" "health" {
 resource "aws_lb_target_group" "this" {
   for_each = { for l in var.dbx_proxy_listener : l.name => l }
 
-  name        = "tg-${each.key}"
+  name        = "dbx-proxy-tg-${each.key}"
   port        = each.value.port
   protocol    = "TCP"
   target_type = "instance"
-  vpc_id      = local.vpc_id
+  vpc_id      = var.vpc_id
 
   health_check {
     protocol            = upper(each.value.mode)
@@ -66,13 +69,13 @@ resource "aws_lb_target_group" "this" {
     interval            = 10
   }
 
-  tags = local.tags
+  tags = var.tags
 }
 
 resource "aws_lb_listener" "this" {
   for_each = aws_lb_target_group.this
 
-  load_balancer_arn = aws_lb.this.arn
+  load_balancer_arn = local.nlb_arn
   port              = each.value.port
   protocol          = upper(each.value.protocol)
 

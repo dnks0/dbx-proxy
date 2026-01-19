@@ -23,7 +23,7 @@ Include the module in your Terraform stack:
 ```hcl
 module "dbx_proxy" {
 
-  source = "github.com/dnks0/dbx-proxy//terraform/aws?ref=v0.1.0"
+  source = "github.com/dnks0/dbx-proxy//terraform/aws?ref=v<release>"
 
   # aws config
   region    = "eu-central-1"
@@ -31,7 +31,7 @@ module "dbx_proxy" {
   ...
 
   # dbx-proxy config
-  dbx_proxy_image_version = "0.1.0"
+  dbx_proxy_image_version = "<release>"
   dbx_proxy_health_port   = 8080
 
   # Example: forward TCP/443 to a private target in your VPC
@@ -57,6 +57,8 @@ module "dbx_proxy" {
 More details about the Terraform module and configurations can be found [here](terraform/README.md).
 
 You will still need to configure the Databricks-side objects like NCC, private endpoint rules and accept the connection on your endpoint-service.
+
+By default the module runs in `deployment_mode = "bootstrap"` and can create networking and the NLB/endpoint service. If you already have networking use `deployment_mode = "bootstrap"` and provide `vpc_id`, and `subnet_ids`. If you already have networking/NLB, set `deployment_mode = "proxy-only"` and provide `vpc_id`, `subnet_ids`, and `nlb_arn` (see Terraform docs for details).
 
 ### Troubleshooting
 
