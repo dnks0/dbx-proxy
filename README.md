@@ -19,6 +19,10 @@ Connectivity to your custom resources can be configured via a dedicated Private 
 - **Terraform module** ready to use (currently **AWS only**)
 - No TLS termination, only passthrough!
 
+### High availability (overview)
+
+`dbx-proxy` is placed behind an AWS Network Load Balancer, which spreads connections across the instances in the Auto Scaling Group. Availability depends on how many instances you run and whether your subnets span multiple AZs. See the Terraform module details for configuration and behavior: [High availability (AWS)](terraform/README.md#high-availability-aws).
+
 ### Deployment (Terraform) / How to use
 
 `dbx-proxy` essentially provides Steps 1 and 2 when following the official Databricks documentation for private connectivity to resources in your own networks:
