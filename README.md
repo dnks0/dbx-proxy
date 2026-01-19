@@ -6,12 +6,18 @@
 
 Many enterprise resources live in private networks and are not reachable from serverless compute by default. `dbx-proxy` provides a controlled entry point for [private connectivity to resources in your VPC/Vnet](https://docs.databricks.com/aws/en/security/network/serverless-network-security/pl-to-internal-network).
 
+![](resources/img/overview.png)
+
+Connectivity to your custom resources can be configured via a dedicated Private Endpoint that is connected to a Network Load Balancer (AWS) in your network. From there on you can route traffic accordingly to targets. However, this approach comes with certain limiations for routing of network traffic due to limitations of cloud-provider offerings, e.g. a NLB on AWS does only operate on Layer 4 of the TCP/IP stack, allowing traffic to be routed only by IP/Port. `dbx-proxy` solves this problem by introducing an additional component which receives all traffic from your NLB and takes over the routing logic for individual targets based on your configuration. It is able to operate on Layer 4 & 7 providing greater flexibility for reaching your targets from Databricks Serverless compute.
+
+
 ### What you get
 
 - **Forwarding of L4 & L7 network traffic** based on your configuration
   - L4 (TCP): forwarding of plain TCP traffic, e.g. for databases
   - L7 (HTTP) forwarding of HTTP(s) traffic with **SNI-based routing**, e.g. for applications/APIS
 - **Terraform module** ready to use (currently **AWS only**)
+- No TLS termination, only passthrough!
 
 ### Deployment (Terraform) / How to use
 

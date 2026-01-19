@@ -77,7 +77,7 @@ These variables define what the proxy should do (listeners, health port, image t
 
 | Variable | Type | Default | Description |
 |---|---:|---:|---|
-| `dbx_proxy_image_version` | `string` | `"0.2.0"` | Docker image tag/version of `dbx-proxy` to deploy. |
+| `dbx_proxy_image_version` | `string` | `"0.1.1"` | Docker image tag/version of `dbx-proxy` to deploy. |
 | `dbx_proxy_health_port` | `number` | `8080` | Health port exposed by `dbx-proxy` (HTTP `GET /status`). Also used for NLB target group health checks. |
 | `dbx_proxy_max_connections` | `number` | `null` | Optional HAProxy `maxconn` override. If unset, the AWS module derives a value from vCPU and memory of the selected instance-type. |
 | `dbx_proxy_listener` | `list(object)` | `[]` | Listener configuration (ports/modes/routes/destinations). See **Listener configuration** below. |
