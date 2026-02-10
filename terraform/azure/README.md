@@ -4,6 +4,14 @@ This module deploys `dbx-proxy` on Azure, using an internal Standard Load Balanc
 
 For common concepts (listener config, deployment modes, overall limitations), see the global module documentation in `terraform/README.md`.
 
+#### Architecture
+
+![Azure dbx-proxy architecture](../../resources/img/azure-architecture.png)
+
+This module provisions a private Standard Load Balancer with a backend pool and probe, a Private Link Service for private communication from Databricks serverless, and a VM scale set of `dbx-proxy` instances in your VNet.
+The VM scale set will automatically span multiple availability-zones for robustness.
+Optional bootstrap networking creates the VNet, subnet, and NAT gateway when not provided.
+
 ---
 
 ### Quick start

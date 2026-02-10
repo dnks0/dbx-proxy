@@ -19,7 +19,7 @@ Connectivity to your custom resources can be configured via a dedicated Private 
 
 - **Forwarding of L4 & L7 network traffic** based on your configuration
   - L4 (TCP): forwarding of plain TCP traffic, e.g. for databases
-  - L7 (HTTP) forwarding of HTTP(s) traffic with **SNI-based routing**, e.g. for applications/APIS
+  - L7 (HTTP) forwarding of HTTP(s) traffic with **SNI-based routing**, e.g. for applications/API's
 - **Terraform module** ready to use for **AWS and Azure**
 - No TLS termination, only passthrough!
 

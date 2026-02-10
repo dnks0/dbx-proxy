@@ -32,10 +32,10 @@ These variables define overall configuration of dbx-proxy:
 
 | Variable | Type | Default | Description |
 |---|---:|---:|---|
-| `deployment_mode` | `string` | `"bootstrap"` | Controls whether the module bootstraps networking/load balancer (`bootstrap`) or attaches to existing infrastructure (`proxy-only`). |
 | `prefix` | `string` | `null` | Optional naming prefix. A randomized suffix is always appended. |
 | `tags` | `map(string)` | `{}` | Extra tags applied to Azure resources. |
 | `instance_type` | `string` | Azure: `"Standard_D2ps_v6"`, AWS: `"t4g.medium"` | VM size for proxy instances. |
+| `deployment_mode` | `string` | `"bootstrap"` | Controls whether the module bootstraps networking/load balancer (`bootstrap`) or attaches to existing infrastructure (`proxy-only`). |
 | `min_capacity` | `number` | `1` | Minimum number of dbx-proxy instances. |
 | `max_capacity` | `number` | `1` | Maximum number of dbx-proxy instances. |
 | `enable_nat_gateway` | `bool` | `true` | Whether to create IGW + NAT for outbound internet access (only when creating networking in `bootstrap` mode). |

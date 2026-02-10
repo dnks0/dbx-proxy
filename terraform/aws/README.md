@@ -4,6 +4,15 @@ This module deploys `dbx-proxy` on AWS, using an internal Network Load Balancer 
 
 For common concepts (listener config, deployment modes, overall limitations), see the global module documentation in `terraform/README.md`.
 
+#### Architecture
+
+![AWS dbx-proxy architecture](../../resources/img/aws-architecture.png)
+
+This module provisions a private Network-Load-Balancer with target groups, an endpoint service for Private Link communication from Databricks serverless, and an autoscaling-group of `dbx-proxy` instances inside your VPC.
+In bootstrap-mode, the default subnets are created across availability-zones. The autoscaling-group automatically tries to balance instances across subnets and therefore availability-zones to achieve robustness.
+In proxy-only mode, it is your responsibility to configure subnets accordingly.
+Optional bootstrap networking creates the VPC, subnets, and NAT/IGW when not provided.
+
 ---
 
 ### Quick start
