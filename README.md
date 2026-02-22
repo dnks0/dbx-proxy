@@ -1,5 +1,8 @@
 ## dbx-proxy
 
+> [!IMPORTANT]
+> **Deprecated:** This repository has migrated to [databricks-solutions/dbx-proxy](https://github.com/databricks-solutions/dbx-proxy) and will be discontinued (no further active development or maintenance).
+
 `dbx-proxy` is a lightweight **HAProxy-based load balancer** that enables **private network connectivity** from **Databricks Serverless** compute to **resources in your own VPC/VNet** (for example: databases, applications, etc).
 
 ### What problem it solves
